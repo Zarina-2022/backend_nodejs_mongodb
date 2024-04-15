@@ -173,3 +173,15 @@ phone:5446789223
 # Populate
 
 - Farklı kolleksiyonlar arasında oluşturulan ilişkilerde veriye erişmek için sorgularda kullanılan bir method. Populate, dökümanın içeriende referans olarak tanımlanmış bir alanı id'den yola çıkarak asıl kolleksiyondaki ilgili veriye erişir ve referans olarak tanımlanan id değerini değerinin yerine dökümanın verilerini getirir
+
+
+
+
+
+//========================
+
+users:
+zarina => zarina@gmail.com => Zarina@123 
+test => test@gmail.com => Test@123  (new password: !NewPassword456!    )
+marina => marina@gmail.com => Marina@123
+karima => karima@gmail.com => Karima@123

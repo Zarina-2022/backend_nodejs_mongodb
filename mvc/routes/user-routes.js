@@ -7,21 +7,33 @@ const {
   deleteUser,
 } = require("../controllers/user-controllers");
 
-const {signup, login, forgotPasssword, resetPassword} = require("../controllers/auth-controllers")
+const {
+  signup,
+  login,
+  forgotPasssword,
+  resetPassword,
+  updatePassword,
+  protect,
+} = require("../controllers/auth-controllers");
 
 const router = express.Router();
 
 // USER'IN KULLANDIGI ROUTE'LAR: - authentication & authorizasition operations
 // auth-controllers.js
-router.post('/signup', signup) // yeni hesap olusturmakb (register) icin
-router.post('/login', login) // var olan hesaba giris yapmak icin
+router.post("/signup", signup); // yeni hesap olusturmakb (register) icin
+router.post("/login", login); // var olan hesaba giris yapmak icin
 
 // user sifresini unuttuysa:
 router.post("/forgot-password", forgotPasssword);
 
 // e-mailine gonderdigimiz linke istek atinca
-router.patch("/reset-password/:token", resetPassword)
+router.patch("/reset-password/:token", resetPassword);
 
+//! bu satirdan sonraki butun routlardan once protect middelware calissin (the protect middleware runs before all routes after this line:):
+router.use(protect)
+
+// kullanici sifreyi guncellemek istiyorsa:
+router.patch("/update-password", updatePassword);
 
 // GENELLIKLE ADMIN KULLANDIGI ROUTE'LAR: - crud operations
 // user-controllers.js
@@ -40,4 +52,3 @@ router
 
 module.exports = router;
 // simdi router'i index.js te tanitmamiz lazim
-

@@ -73,7 +73,7 @@ const userSchema = new Schema({
 userSchema.pre("save", async function (next) {
   // daha once sifre hashlendi ise bu function calismasin:
   // reset sifre yaparken haslendigi icin bu functioni es gec:
-  if (!this.isModified("password") || this.isNew) return next();
+  if (!this.isModified("password")) return next();
 
   //* Hashing (encryption)=> sifreyi hash ve saltla:
   this.password = await bcrypt.hash(this.password, 12);

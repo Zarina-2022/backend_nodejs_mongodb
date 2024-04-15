@@ -161,6 +161,7 @@ exports.updateTour = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteTour = catchAsync(async (req, res, next) => {
+
     const deletedTour = await tourModel.findByIdAndDelete(req.params.id);
     res.status(204).json({});
 });

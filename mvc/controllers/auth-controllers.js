@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken"); // npm i jsonwebtoken
 const AppError = require("../../utils/appError");
 const catchAsync = require("../../utils/catchAsync");
 const sendMail = require("../../utils/email");
+const crypto = require("crypto");
 
 // Create JWT
 /*
@@ -17,6 +18,20 @@ const signToken = (user_id) => {
   });
 };
 
+// sifre update oldugunda otomatik logout (tekrar login yapilmasi icin) olmamasi icin token olusturup gondermemiz lazim.
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  // dont send a password:
+  user.password = undefined
+
+  res.status(statusCode).json({
+    message: "Logged in",
+    user,
+    token,
+  });
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await userModel.create({
     name: req.body.name,
@@ -25,13 +40,8 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm: req.body.passwordConfirm, // sifre onayi database'e kaydedilmemesi lazim (ayni sifre iki kez yer tutuyor)
   });
 
-  const token = signToken(newUser._id);
-
-  res.status(201).json({
-    message: "Your account has been created successfully",
-    data: newUser,
-    token: token,
-  });
+  // jwt tokeni olustur ve gonder:
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -59,12 +69,7 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 4th => If everything is OK, create and send jwt token
-
-  const token = signToken(user.id);
-
-  return res
-    .status(200)
-    .json({ message: "Account logged in.", data: user, token });
+  createSendToken(user, 200, res);
 });
 
 /**
@@ -208,13 +213,60 @@ You can update your password within 10 minutes by sending a PATCH request to thi
 });
 
 //*  kullanicinin yeni sifresini kaydet:
-exports.resetPassword = (req, res, next) => {
+exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1) tokenden yola cikarak kullaniciyi bul
-  // 2) kullanici bulunduysa ve token tarihi gecmediyse yeni sifreyi belirle:
-  // 3) kullanicinin sifre degistirme tarihini guncelle:
-};
+  const token = req.params.token;
+  console.log(token); // original (mail'e gelen) token (not hashed)
 
-//? If user knows his password and still wants to change it
+  // databaseteki token hashlendigi icin biz maildeki tokeni databasteki ile karsilastiramayiz.
+  // Bu yuzden once maildeki tokeni hashleyecegiz sonra database teki ile karsilastirip user'i bulacagiz.
+  // bunun icin daha once tokeni hashlemek icin hangi yontemi kullandiysak ayni yontemi kullanmamiz lazim:
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  // database'teki hashlenmis token degerine sahip user'i al ve tokenin son kullanim tarihi mevcut tarihten ileri (buyuk)
+  // ise (yani tokenin olusturuldugu andan itibaren suresi bitecegi ana kadar olan surenin icinde ise kulan) yeni sifreyi belirle:
+  const user = await userModel.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  // 2) Token gecersiz veya suresi dolmus ise uyari gonder:
+  if (!user) {
+    return next(new AppError("Token is invalid or expired."));
+  }
+  console.log("YENI SIFRE => ", req.body.password);
+  // 3) kullanicinin sifre degistirme tarihini guncelle:
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.password;
+  user.passwordResetToken = undefined; // null yazarsak database te yer tutar. undefined ise database'ten tatamen kalkar.
+  user.passwordResetExpires = undefined;
+
+  await user.save();
+
+  return res.status(200).json({ message: "Your new password has been set." });
+});
+
+//? If user knows his password and still wants to change(update) it
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) kullaniciyi al:
+  const user = await userModel.findById(req.user._id).select("+password");
+
+  // 2) Gelen mevcut sifre dogru mu kontrol et:
+  if (!(await user.correctPassword(req.body.currentPassword, user.password))) {
+    return next(new AppError("The current password you entered is incorrect."));
+  }
+
+  // 3) dogru ise sifreyi guncelle:
+  user.password = req.body.newPassword;
+  user.passwordConfirm = req.body.newPassword;
+  await user.save();
+
+  // bu sekilde birakirsak user otomatik logout olur ve tekrar yeni sifresi ile giris yapmak zorundadir
+
+  // eger user sifreyi degistirdikten sonra tekrar login olmasini istemiyorsak:
+  // 4) yeni JWT tokeni olustur ve gonder:
+  createSendToken(user, 200, res);
+});
 
 /**
 
