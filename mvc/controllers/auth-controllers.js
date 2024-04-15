@@ -23,8 +23,9 @@ const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
 
   // dont send a password:
-  user.password = undefined
+  user.password = undefined;
 
+  // send response:
   res.status(statusCode).json({
     message: "Logged in",
     user,
@@ -200,6 +201,10 @@ You can update your password within 10 minutes by sending a PATCH request to thi
       html,
     });
   } catch (err) {
+    // mail atilamaz ise database kaydedilen degerleri kaldiracagim
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.save({ validateBeforeSave: false });
     return next(
       new AppError("An error occurred while sending the email.", 404)
     );
