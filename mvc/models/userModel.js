@@ -63,8 +63,9 @@ const userSchema = new Schema({
   passwordResetExpires: Date,
 });
 
-/*
-    Database user'i kaydetmeden once:
+//!   MIDDELWARES
+/* 1)
+    Database'e user'i kaydetmeden once:
       -  password alanini sifreleme algoritmadan gecir ve sifrele. (document middelware pre kullan)
       -  passwordConfirm alanini kaldir (document middelware pre kullan)
 */
@@ -82,7 +83,28 @@ userSchema.pre("save", async function (next) {
   this.passwordConfirm = undefined;
 });
 
-//todo: hashlenmis sifre ile normal sifreyi karsilastiran model tanimla:
+// 2) sifre degisince tarihi degistir:
+userSchema.pre("save", async function (next) {
+  // if sifre degismediyse veya document yeni olusturulduysa birsey yapma:
+  if (!this.isModified("password") || this.isNew) return next();
+
+  // sifre sonradan degisildiyse sifre degisim tarihini belirle:
+  // yeni password tarihini 1 saniye (-1000) ile olusturuyoruz ki token ile sorun olmasin.
+  this.passwordChangedAt = Date.now() - 1000;
+
+  next()
+});
+
+// 3) If the account is inactive (false) when trying to retrieve the user from the database, block access:
+// /^find/ is a regular expression (regex). It's used to match strings that start with the word "find".
+userSchema.pre(/^find/, function (next) {
+  // bunda sonraki islemlerde active olmayanlari dahil etme kosulu giriyoruz burada:
+  this.find({ active: { $ne: false } });
+  next();
+});
+
+//!  METHODS
+//todo: 4) hashlenmis sifre ile normal sifreyi karsilastiran model tanimla:
 // tanimladigimiz bu method sadece user belgeleri uzerinden erisilebilir:
 userSchema.methods.correctPassword = async function (
   normalCandidatePassword,
@@ -91,7 +113,7 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(normalCandidatePassword, hashedUserPassword);
 };
 
-//todo: jwt olusturma tarihinden sonra sifre degistitilmis mi kontrol et:
+//todo: 5) jwt olusturma tarihinden sonra sifre degistitilmis mi kontrol et:
 userSchema.methods.controlPasswordDate = function (JWTTime) {
   if (JWTTime) {
     console.log("JWT TIME =>", JWTTime); // response =  1712998464
@@ -110,7 +132,7 @@ userSchema.methods.controlPasswordDate = function (JWTTime) {
   }
 };
 
-//todo: sifre sifirlama (modeli) tokeni olustur:
+//todo: 6) sifre sifirlama (modeli) tokeni olustur:
 // - Bu token (bu arada jwt tokeni degil bu, jwt'yi kimlik digrulamada kulaniriz daha cok)
 //   daha sonra kullanıcıya mail'ine gonderilecek ve kullanıcı,
 //   şifresini sıfırlarken kimliğini doğrulamak için bu token'i (crypto ile olusturdugumuz) kullanacaktır.

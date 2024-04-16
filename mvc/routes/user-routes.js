@@ -6,6 +6,7 @@ const {
   updateUser,
   deleteUser,
   updateMe,
+  deleteMe,
 } = require("../controllers/user-controllers");
 
 const {
@@ -30,11 +31,14 @@ router.post("/forgot-password", forgotPasssword);
 // e-mailine gonderdigimiz linke istek atinca
 router.patch("/reset-password/:token", resetPassword);
 
-//! bu satirdan sonraki butun routlardan once protect middelware calissin (the protect middleware runs before all routes after this line:):
-router.use(protect)
+//! he protect middleware runs before all routes after this line:
+router.use(protect) // protect middelware
 
 // user hesabini update yapmak isterse:
 router.patch("/update-me", updateMe);
+
+// user hesabini silmek (disable) yapmak isterse:
+router.delete("/delete-me", deleteMe);
 
 // kullanici sifreyi guncellemek istiyorsa:
 router.patch("/update-password", updatePassword);

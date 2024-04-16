@@ -180,8 +180,4 @@ phone:5446789223
 
 //========================
 
-users:
-zarina => zarina@gmail.com => Zarina@123 
-test => test@gmail.com => Test@123  (new password: !NewPassword456!    )
 marina => marina@gmail.com => Marina@123
-karima => karima@gmail.com => Karima@123

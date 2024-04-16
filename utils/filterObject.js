@@ -1,3 +1,5 @@
+// user-controllers/update-user yaparken bu object'i kullaniyoruz:
+
 // filtrelenecek nesneyi gonderiyoruz
 // nesnede izin verdigimiz alanlari yeni olusturdugumuz nesnede gonderiyoruz.
 

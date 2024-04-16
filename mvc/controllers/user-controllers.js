@@ -3,6 +3,7 @@ const catchAsync = require("../../utils/catchAsync");
 const filterObj = require("../../utils/filterObject");
 const userModel = require("../models/userModel");
 
+//! USER routes
 // (user) user kendi hesabini update yapabilir (sifre haric):
 exports.updateMe = catchAsync(async (req, res, next) => {
   // 1) sifreyi guncellemey calisirsa hata ver:
@@ -25,17 +26,26 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     .json({ message: "Kullanici basariyla guncellendi", user: updatedUser });
 });
 
+// user'in kendi hesabini tamamen silmesi:
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  // 1) user'in active degerini false'a cek:
+  await userModel.findByIdAndUpdate(req.user.id, { active: false });
+
+  res.status(200).json({ message: "Account is disabled." });
+});
+
+//! ADMIN routes
 // (admin) butun kullanicilarin bilgilerini al:
 exports.getAllUsers = (req, res) => {};
 
 // (admin) yeni user olustur:
 exports.createUser = (req, res) => {};
 
-// () userin hesap bilgilerini al:
+// (admin) userin hesap bilgilerini al:
 exports.getUser = (req, res) => {};
 
 // (admin) admin'in user'i guncellemesi
 exports.updateUser = (req, res) => {};
 
-// hesabi siler
+// admin userin hesabini tamamen siler
 exports.deleteUser = (req, res) => {};

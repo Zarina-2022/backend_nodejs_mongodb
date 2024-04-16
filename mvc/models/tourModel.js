@@ -41,9 +41,9 @@ const tourSchema = new Schema(
       minLength: [10, "Tour name must be at least 10 characters."], // buil-in validators
       maxLength: [40, "Tour name must be les than 40 characters."], // buil-in validators
       validate: [
-        validator.isAlpha,// sadece harf icermesi gerekiyor.        // validator package
-        "Tour name can be written only with alphabetic characters.", 
-      ], 
+        validator.isAlpha, // sadece harf icermesi gerekiyor.        // validator package
+        "A tour name must only contain characters between A-Z",
+      ],
     },
     duration: {
       // Validation
